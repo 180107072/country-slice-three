@@ -9,14 +9,11 @@ const SHADOW_CAP_SEGMENTS = 10;
 function addShadowCap(
   center: THREE.Vector3,
   offset: THREE.Vector3,
-  neighbor: THREE.Vector3,
   positions: number[],
   uvs: number[],
   indices: number[],
-  forward: boolean
+  forward: boolean,
 ) {
-  const tangent = neighbor.clone().sub(center).normalize();
-  const dir = forward ? tangent : tangent.clone().negate();
   const rotationAxis = forward ? -Math.PI : Math.PI;
   const startIndex = positions.length / 3;
 
@@ -98,25 +95,24 @@ function buildShadowGeometry(points: THREE.Vector3[]) {
       base + 1,
       base + 4,
       base + 5,
-      base + 1
+      base + 1,
     );
   }
 
-  addShadowCap(points[0], offsets[0], points[1], positions, uvs, indices, true);
+  addShadowCap(points[0], offsets[0], positions, uvs, indices, true);
   addShadowCap(
     points[points.length - 1],
     offsets[offsets.length - 1],
-    points[points.length - 2],
     positions,
     uvs,
     indices,
-    false
+    false,
   );
 
   const geometry = new THREE.BufferGeometry();
   geometry.setAttribute(
     "position",
-    new THREE.Float32BufferAttribute(positions, 3)
+    new THREE.Float32BufferAttribute(positions, 3),
   );
   geometry.setAttribute("uv", new THREE.Float32BufferAttribute(uvs, 2));
   geometry.setIndex(indices);
