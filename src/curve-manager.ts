@@ -1,9 +1,8 @@
 import * as THREE from "three";
 import { InstancedWall } from "./instanced-wall";
-import { ShadowDecal } from "./shadow-decal";
 import { Curve } from "./curve";
 import { WallConstructor } from "./wall-constructor";
-import { smoothPoints } from "./utils";
+import { smoothPoints, snapPointsToCircle } from "./utils";
 
 interface UserCurve {
   points: THREE.Vector3[];
@@ -12,7 +11,6 @@ interface UserCurve {
 export class CurveManager {
   private userCurves: UserCurve[] = [];
   private instancedWalls: Array<InstancedWall | null> = [];
-  private shadows: Array<ShadowDecal | null> = [];
   private dirty = new Set<number>();
   readonly scene: THREE.Scene;
 
@@ -24,7 +22,6 @@ export class CurveManager {
     const curve: UserCurve = { points: [] };
     this.userCurves.push(curve);
     this.instancedWalls.push(null);
-    this.shadows.push(null);
     const idx = this.userCurves.length - 1;
     this.dirty.add(idx);
     return idx;
@@ -48,28 +45,31 @@ export class CurveManager {
         return;
       }
       const smoothed = smoothPoints(curve.points, 40);
-      const bevyLikeCurve = Curve.from(smoothed);
-      const bricks = WallConstructor.fromCurve(bevyLikeCurve);
+      const snappedCircle = snapPointsToCircle(smoothed);
+      if (snappedCircle) {
+        const center = snappedCircle.center.clone();
+        center.y = WallConstructor.WALL_HEIGHT;
+      }
+      const finalPoints = snappedCircle?.points ?? smoothed;
+      const bevyLikeCurve = Curve.from(finalPoints);
+
+      const bricks = WallConstructor.fromCurve(
+        bevyLikeCurve,
+        snappedCircle ? 0 : undefined,
+      );
 
       if (!this.instancedWalls[index]) {
         this.instancedWalls[index] = new InstancedWall(this.scene);
       }
       this.instancedWalls[index]?.update(bricks);
-
-      if (!this.shadows[index]) {
-        this.shadows[index] = new ShadowDecal(this.scene);
-      }
-      this.shadows[index]?.update(bevyLikeCurve);
     });
     this.dirty.clear();
   }
 
   clear() {
     this.instancedWalls.forEach((wall) => wall?.dispose(this.scene));
-    this.shadows.forEach((shadow) => shadow?.dispose(this.scene));
     this.userCurves = [];
     this.instancedWalls = [];
-    this.shadows = [];
     this.dirty.clear();
   }
 }

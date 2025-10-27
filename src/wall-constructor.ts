@@ -30,15 +30,15 @@ function randomSplits(splits: number, variance: number, rng: RNG) {
 }
 
 export class WallConstructor {
-  private static readonly BRICK_WIDTH = 0.2;
-  private static readonly BRICK_WIDTH_VARIANCE = 0.14;
-  private static readonly BRICK_HEIGHT = 0.2;
-  private static readonly BRICK_HEIGHT_VARIANCE = 0.09;
-  private static readonly BRICK_DEPTH = 0.2;
-  private static readonly BRICK_DEPTH_VARIANCE = 0.05;
-  private static readonly WALL_HEIGHT = 1.4;
+  static readonly BRICK_WIDTH = 0.2;
+  static readonly BRICK_WIDTH_VARIANCE = 0.14;
+  static readonly BRICK_HEIGHT = 0.2;
+  static readonly BRICK_HEIGHT_VARIANCE = 0.09;
+  static readonly BRICK_DEPTH = 0.2;
+  static readonly BRICK_DEPTH_VARIANCE = 0.05;
+  static readonly WALL_HEIGHT = 1.4;
 
-  static fromCurve(curveIn: Curve): Brick[] {
+  static fromCurve(curveIn: Curve, gapProbability = 0.35): Brick[] {
     const startExtension = curveIn
       .getPosAtU(0)
       .sub(curveIn.getTangentAtU(0).multiplyScalar(0.1));
@@ -56,16 +56,16 @@ export class WallConstructor {
     const wallLength = curve.length;
     const rowCount = Math.max(
       1,
-      Math.floor(WallConstructor.WALL_HEIGHT / WallConstructor.BRICK_HEIGHT)
+      Math.floor(WallConstructor.WALL_HEIGHT / WallConstructor.BRICK_HEIGHT),
     );
     const rows = randomSplits(
       rowCount,
       WallConstructor.BRICK_HEIGHT_VARIANCE / WallConstructor.WALL_HEIGHT,
-      rng
+      rng,
     );
     const bricksPerRow = Math.max(
       2,
-      Math.floor(wallLength / WallConstructor.BRICK_WIDTH)
+      Math.floor(wallLength / WallConstructor.BRICK_WIDTH),
     );
 
     const bricks: Brick[] = [];
@@ -80,12 +80,12 @@ export class WallConstructor {
       const brickWidthSegments = randomSplits(
         bricksPerRow,
         WallConstructor.BRICK_WIDTH_VARIANCE / Math.max(wallLength, 0.0001),
-        rng
+        rng,
       );
 
       const rowBricks: Brick[] = [];
       for (let i = 0; i < brickWidthSegments.length - 1; i++) {
-        if (rowIndex === rows.length - 1 && rng.next() < 0.35) {
+        if (rowIndex === rows.length - 1 && rng.next() < gapProbability) {
           continue;
         }
 
@@ -102,7 +102,7 @@ export class WallConstructor {
           heightRatio: number,
           pivotV: number,
           rowBottom: number,
-          rowTop: number
+          rowTop: number,
         ) => {
           rowBricks.push({
             rowCount: rowCount * 2,
@@ -113,7 +113,7 @@ export class WallConstructor {
             scale: new THREE.Vector3(
               widthWorld,
               heightRatio * WallConstructor.WALL_HEIGHT,
-              brickDepth
+              brickDepth,
             ),
             position: new THREE.Vector3(pivotU * wallLength, 0, 0),
             quaternion: new THREE.Quaternion(),
@@ -131,7 +131,7 @@ export class WallConstructor {
             bottomHeight,
             pivotV2,
             rowIndex * 2 + 1,
-            rowIndex * 2 + 2
+            rowIndex * 2 + 2,
           );
         } else {
           const pivotV = rowU + totalRowHeight / 2;

@@ -1,4 +1,5 @@
 import * as THREE from "three";
+import { RoundedBoxGeometry } from "three/examples/jsm/Addons.js";
 
 export interface Brick {
   rowCount: number;
@@ -17,7 +18,7 @@ export class InstancedWall {
     THREE.MeshStandardMaterial
   > | null = null;
   private capacity = 0;
-  private readonly geometry = new THREE.BoxGeometry(1, 1, 1);
+  private readonly geometry = new RoundedBoxGeometry(1, 1, 1);
   private readonly material = new THREE.MeshStandardMaterial({
     color: 0xd3b08c,
     roughness: 0.85,
@@ -41,7 +42,7 @@ export class InstancedWall {
       this.mesh = new THREE.InstancedMesh(
         this.geometry,
         this.material,
-        this.capacity
+        this.capacity,
       );
       this.mesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
       this.scene.add(this.mesh);
